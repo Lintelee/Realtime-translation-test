@@ -1,4 +1,4 @@
-// src/App.js - 主應用程式
+// src/App.js - 完整版本
 import React, { useState, useEffect } from 'react';
 import { 
   Globe, Mic, MicOff, Volume2, Settings, 
@@ -16,7 +16,6 @@ const WelcomeScreen = ({ onStart, onLearnMore }) => {
       <div className="welcome-content">
         <div className="welcome-illustration">
           <svg viewBox="0 0 400 300" className="illustration">
-            {/* 簡化的人物和對話泡泡插圖 */}
             <g>
               {/* 人物剪影 */}
               <ellipse cx="80" cy="250" rx="30" ry="40" fill="#4a5568" />
@@ -236,7 +235,6 @@ const SettingsScreen = ({ apiKeys, onUpdateApiKeys, onClose }) => {
 
   const handleSave = () => {
     onUpdateApiKeys(localApiKeys);
-    // 儲存其他設定
     localStorage.setItem('theme', theme);
     localStorage.setItem('textSize', textSize);
     onClose();
@@ -299,7 +297,7 @@ const SettingsScreen = ({ apiKeys, onUpdateApiKeys, onClose }) => {
         
         <section className="settings-section">
           <h2>Help & Feedback</h2>
-          <div className="setting-item">
+          <div className="setting-item" onClick={() => onClose('help')}>
             <HelpCircle className="setting-icon" />
             <div className="setting-info">
               <h3>Support & Feedback</h3>
@@ -373,7 +371,7 @@ const HelpScreen = ({ onClose }) => {
 
 // 主應用程式
 const TranslationApp = () => {
-  const [currentScreen, setCurrentScreen] = useState('modeSelection');
+  const [currentScreen, setCurrentScreen] = useState('welcome');
   const [translationMode, setTranslationMode] = useState(null);
   const [conversations, setConversations] = useState([]);
   const [lectureText, setLectureText] = useState([]);
@@ -416,6 +414,46 @@ const TranslationApp = () => {
         translatedText: "我很好，謝謝。",
         targetLang: "zh-TW",
         isTranslating: false
+      },
+      {
+        id: 4,
+        originalText: "我很好，謝謝。",
+        originalLang: "zh-TW", 
+        translatedText: "I'm fine, thank you.",
+        targetLang: "en",
+        isTranslating: false
+      },
+      {
+        id: 5,
+        originalText: "What's your name?",
+        originalLang: "en",
+        translatedText: "你叫什麼名字？",
+        targetLang: "zh-TW",
+        isTranslating: false
+      },
+      {
+        id: 6,
+        originalText: "你叫什麼名字？",
+        originalLang: "zh-TW",
+        translatedText: "What's your name?",
+        targetLang: "en",
+        isTranslating: false
+      },
+      {
+        id: 7,
+        originalText: "My name is Alex.",
+        originalLang: "en",
+        translatedText: "我的名字是艾萊克斯。",
+        targetLang: "zh-TW",
+        isTranslating: false
+      },
+      {
+        id: 8,
+        originalText: "我的名字是史蒂芬。",
+        originalLang: "zh-TW",
+        translatedText: "My name is Stephen.",
+        targetLang: "en",
+        isTranslating: false
       }
     ]);
     
@@ -444,10 +482,33 @@ const TranslationApp = () => {
 
   const handleSpeak = (text, lang) => {
     // 語音合成邏輯
+    if ('speechSynthesis' in window) {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = lang;
+      speechSynthesis.speak(utterance);
+    }
+  };
+
+  const handleSettingsClose = (nextScreen) => {
+    if (nextScreen === 'help') {
+      setCurrentScreen('help');
+    } else {
+      setCurrentScreen(translationMode || 'modeSelection');
+    }
   };
 
   const renderScreen = () => {
     switch (currentScreen) {
+      case 'welcome':
+        return (
+          <WelcomeScreen 
+            onStart={() => setCurrentScreen('modeSelection')}
+            onLearnMore={() => {
+              alert('這是一個實時翻譯應用，支援對話和講座兩種模式！');
+            }}
+          />
+        );
+        
       case 'modeSelection':
         return <ModeSelection onSelectMode={handleSelectMode} />;
       
@@ -503,7 +564,7 @@ const TranslationApp = () => {
           <SettingsScreen
             apiKeys={apiKeys}
             onUpdateApiKeys={setApiKeys}
-            onClose={() => setCurrentScreen(translationMode || 'modeSelection')}
+            onClose={handleSettingsClose}
           />
         );
       
