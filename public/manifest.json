@@ -1,0 +1,15 @@
+{
+  "short_name": "翻譯助手",
+  "name": "雙向即時翻譯助手",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "192x192 512x512",
+      "type": "image/png"
+    }
+  ],
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#4F46E5",
+  "background_color": "#ffffff"
+}
