@@ -11,6 +11,19 @@ export default async function handler(req, res) {
 
   try {
     let translation = '';
+    
+    // 語言代碼映射
+    const langMap = {
+      'zh-TW': '繁體中文',
+      'zh': '繁體中文',
+      'ja-JP': '日文',
+      'ja': '日文',
+      'en-US': '英文',
+      'en': '英文'
+    };
+
+    const sourceLangName = langMap[sourceLang] || sourceLang;
+    const targetLangName = langMap[targetLang] || targetLang;
 
     if (provider === 'openai') {
       const response = await fetch(
@@ -26,7 +39,7 @@ export default async function handler(req, res) {
             messages: [
               {
                 role: 'system',
-                content: `You are a professional translator. Translate the following text from ${sourceLang} to ${targetLang}. Only provide the translation without any explanation.`
+                content: `你是專業的翻譯員。請將以下${sourceLangName}文字翻譯成${targetLangName}。只提供翻譯結果，不要有任何解釋。`
               },
               {
                 role: 'user',
@@ -61,7 +74,7 @@ export default async function handler(req, res) {
             messages: [
               {
                 role: 'system',
-                content: `You are a professional translator. Translate the following text from ${sourceLang} to ${targetLang}. Only provide the translation without any explanation.`
+                content: `你是專業的翻譯員。請將以下${sourceLangName}文字翻譯成${targetLangName}。只提供翻譯結果，不要有任何解釋。`
               },
               {
                 role: 'user',
