@@ -21,13 +21,10 @@ export default async function handler(req, res) {
           config: {
             encoding: 'WEBM_OPUS',
             sampleRateHertz: 48000,
-            languageCode: 'zh-TW',
-            alternativeLanguageCodes: [
-              'en-US', 'ja-JP', 'fr-FR', 'de-DE',
-              'es-ES', 'ko-KR', 'ru-RU', 'it-IT'
-            ],
+            languageCode: 'ja-JP',  // 預設日文
+            alternativeLanguageCodes: ['zh-TW', 'zh', 'en-US'],  // 備選語言
             enableAutomaticPunctuation: true,
-            model: 'latest_long',
+            // 移除 model 設定，使用預設模型
           },
           audio: {
             content: audio,
@@ -45,7 +42,7 @@ export default async function handler(req, res) {
     if (data.results && data.results[0]) {
       const result = data.results[0];
       const transcript = result.alternatives[0].transcript;
-      const detectedLanguage = result.languageCode || 'zh-TW';
+      const detectedLanguage = result.languageCode || 'ja-JP';
 
       return res.status(200).json({
         text: transcript,
@@ -53,7 +50,7 @@ export default async function handler(req, res) {
       });
     }
 
-    return res.status(200).json({ text: '', language: 'zh-TW' });
+    return res.status(200).json({ text: '', language: 'ja-JP' });
   } catch (error) {
     console.error('Speech-to-text error:', error);
     return res.status(500).json({ error: 'Internal server error' });
