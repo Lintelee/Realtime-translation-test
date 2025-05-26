@@ -1,7 +1,7 @@
 {
-  "short_name": "翻譯助手",
-  "name": "雙向即時翻譯助手",
-  "description": "支援對話和講座模式的即時翻譯工具",
+  "short_name": "Translator",
+  "name": "Real-time Translation Assistant",
+  "description": "Real-time translation app supporting multiple languages",
   "icons": [
     {
       "src": "icon-192.png",
@@ -18,7 +18,7 @@
   ],
   "start_url": "/",
   "display": "standalone",
-  "theme_color": "#3b82f6",
-  "background_color": "#ffffff",
+  "theme_color": "#3182CE",
+  "background_color": "#FFFFFF",
   "orientation": "portrait"
 }
