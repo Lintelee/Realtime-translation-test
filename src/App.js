@@ -1,16 +1,14 @@
-// src/App.js - 完整版本
-import React, { useState, useEffect } from 'react';
+// src/App.js - 完整版本，遵循設計規範
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Globe, Mic, MicOff, Volume2, Settings, 
-  History as HistoryIcon, X, Loader2, Wifi, WifiOff, 
-  MessageSquare, Presentation, Home, Clock,
-  ChevronDown, ChevronUp, ArrowLeft, HelpCircle,
-  Key, Palette, Type, Sun, Moon, ChevronRight
+  Clock, X, Loader2, Search, ChevronRight,
+  Eye, EyeOff, Check, ChevronDown, Home, MessageSquare
 } from 'lucide-react';
 import './App.css';
 
-// 組件：歡迎畫面
-const WelcomeScreen = ({ onStart, onLearnMore }) => {
+// 組件：歡迎頁面
+const WelcomeScreen = ({ onStart }) => {
   return (
     <div className="welcome-screen">
       <div className="welcome-content">
@@ -18,27 +16,20 @@ const WelcomeScreen = ({ onStart, onLearnMore }) => {
           <svg viewBox="0 0 400 300" className="illustration">
             <g>
               {/* 人物剪影 */}
-              <ellipse cx="80" cy="250" rx="30" ry="40" fill="#4a5568" />
-              <circle cx="80" cy="200" r="20" fill="#f7c6a3" />
+              <ellipse cx="120" cy="200" rx="40" ry="60" fill="#4A5568" />
+              <circle cx="120" cy="140" r="25" fill="#FDB99B" />
               
-              <ellipse cx="160" cy="250" rx="30" ry="40" fill="#ed8936" />
-              <circle cx="160" cy="200" r="20" fill="#f7c6a3" />
-              
-              <ellipse cx="240" cy="250" rx="30" ry="40" fill="#2d3748" />
-              <circle cx="240" cy="200" r="20" fill="#f7c6a3" />
-              
-              <ellipse cx="320" cy="250" rx="30" ry="40" fill="#68a894" />
-              <circle cx="320" cy="200" r="20" fill="#f7c6a3" />
+              <ellipse cx="280" cy="200" rx="40" ry="60" fill="#ED8936" />
+              <circle cx="280" cy="140" r="25" fill="#FDB99B" />
               
               {/* 對話泡泡 */}
-              <rect x="50" y="140" width="60" height="30" rx="15" fill="#fdb99b" />
-              <rect x="210" y="140" width="60" height="30" rx="15" fill="#68a894" />
-              <rect x="130" y="120" width="60" height="30" rx="15" fill="#94a8a0" />
-              <rect x="290" y="130" width="40" height="25" rx="12" fill="#fdb99b" />
+              <path d="M 150 120 Q 150 100 170 100 L 210 100 Q 230 100 230 120 L 230 130 Q 230 140 220 140 L 180 140 L 170 150 L 170 140 L 160 140 Q 150 140 150 130 Z" fill="#3182CE" opacity="0.8" />
+              <circle cx="180" cy="120" r="3" fill="white" />
+              <circle cx="190" cy="120" r="3" fill="white" />
+              <circle cx="200" cy="120" r="3" fill="white" />
               
-              {/* 對話泡泡內的點 */}
-              <circle cx="240" cy="155" r="3" fill="white" />
-              <circle cx="250" cy="155" r="3" fill="white" />
+              <path d="M 230 110 Q 230 90 250 90 L 290 90 Q 310 90 310 110 L 310 120 Q 310 130 300 130 L 260 130 L 250 140 L 250 130 L 240 130 Q 230 130 230 120 Z" fill="#68A894" opacity="0.8" />
+              <text x="270" y="115" font-size="20" fill="white" text-anchor="middle">你好</text>
             </g>
           </svg>
         </div>
@@ -46,136 +37,201 @@ const WelcomeScreen = ({ onStart, onLearnMore }) => {
         <h1 className="welcome-title">Speak Freely, Understand Instantly</h1>
         
         <p className="welcome-description">
-          Translate conversations and lectures in real-time between Chinese and multiple languages.
+          Translate conversations in real-time between Chinese and multiple languages.
         </p>
         
         <button className="start-button" onClick={onStart}>
           Start Translating
         </button>
         
-        <button className="learn-more-button" onClick={onLearnMore}>
+        <button className="learn-more-button" onClick={() => alert('Real-time translation app supporting multiple languages with conversation and lecture modes.')}>
           Learn More
         </button>
       </div>
       
-      <div className="welcome-nav">
-        <button className="nav-icon-button active">
-          <Home className="nav-icon" />
+      <div className="bottom-nav">
+        <button className="nav-item active">
+          <Globe className="nav-icon" />
+          <span>Translate</span>
         </button>
-        <button className="nav-icon-button">
-          <MessageSquare className="nav-icon" />
+        <button className="nav-item">
+          <Clock className="nav-icon" />
+          <span>History</span>
         </button>
-        <button className="nav-icon-button">
-          <Mic className="nav-icon" />
-        </button>
-        <button className="nav-icon-button">
+        <button className="nav-item">
           <Settings className="nav-icon" />
+          <span>Settings</span>
         </button>
       </div>
     </div>
   );
 };
 
-// 組件：模式選擇畫面
-const ModeSelection = ({ onSelectMode }) => {
-  return (
-    <div className="mode-selection">
-      <div className="mode-header">
-        <h1>選擇翻譯模式</h1>
-        <p>根據您的需求選擇適合的翻譯模式</p>
-      </div>
+// 組件：翻譯頁面
+const TranslateScreen = ({ apiKeys, translationProvider }) => {
+  const [activeTab, setActiveTab] = useState('two-way');
+  const [selectedLanguage, setSelectedLanguage] = useState('en');
+  const [isRecording, setIsRecording] = useState(false);
+  const [conversations, setConversations] = useState([]);
+  const [oneWayText, setOneWayText] = useState('');
+  const [currentTranscript, setCurrentTranscript] = useState('');
+  const [translationDirection, setTranslationDirection] = useState('en-zh');
+  
+  const recognitionRef = useRef(null);
+
+  const languages = [
+    { code: 'en', name: 'English' },
+    { code: 'ja', name: 'Japanese' },
+    { code: 'ko', name: 'Korean' },
+    { code: 'es', name: 'Spanish' },
+    { code: 'fr', name: 'French' },
+    { code: 'de', name: 'German' },
+    { code: 'ru', name: 'Russian' },
+    { code: 'it', name: 'Italian' }
+  ];
+
+  const startRecording = async () => {
+    if (!apiKeys.google || !apiKeys[translationProvider]) {
+      alert('Please configure API keys in Settings');
+      return;
+    }
+
+    // 使用瀏覽器內建語音識別 (示意)
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert('Speech recognition not supported');
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = activeTab === 'two-way' ? 'zh-TW' : selectedLanguage;
+
+    recognition.onresult = (event) => {
+      const transcript = Array.from(event.results)
+        .map(result => result[0].transcript)
+        .join('');
       
-      <div className="mode-cards">
-        <div className="mode-card" onClick={() => onSelectMode('conversation')}>
-          <MessageSquare className="mode-icon" />
-          <h2>對話模式</h2>
-          <p>適合雙向對話場景，自動識別說話者語言並分組顯示</p>
-        </div>
-        
-        <div className="mode-card" onClick={() => onSelectMode('lecture')}>
-          <Presentation className="mode-icon" />
-          <h2>講座模式</h2>
-          <p>適合單向演講或教學，提供連續的翻譯文本顯示</p>
-        </div>
-      </div>
-    </div>
-  );
-};
+      setCurrentTranscript(transcript);
+      
+      if (event.results[event.results.length - 1].isFinal) {
+        if (activeTab === 'two-way') {
+          // 雙向模式：添加到對話
+          const newConv = {
+            id: Date.now(),
+            originalText: transcript,
+            originalLang: /[\u4e00-\u9fa5]/.test(transcript) ? 'Chinese' : languages.find(l => l.code === selectedLanguage)?.name,
+            translatedText: 'Translation in progress...',
+            targetLang: /[\u4e00-\u9fa5]/.test(transcript) ? languages.find(l => l.code === selectedLanguage)?.name : 'Chinese'
+          };
+          setConversations([newConv, ...conversations]);
+        } else {
+          // 單向模式：更新翻譯文本
+          setOneWayText(transcript + '\n\nTranslation: [Translation would appear here]');
+        }
+        setCurrentTranscript('');
+      }
+    };
 
-// 組件：對話模式
-const ConversationMode = ({ 
-  conversations, 
-  isListening, 
-  onStartListening, 
-  onStopListening,
-  onSpeak,
-  targetLanguage,
-  onLanguageChange 
-}) => {
-  const [expandedCards, setExpandedCards] = useState({});
+    recognitionRef.current = recognition;
+    recognition.start();
+    setIsRecording(true);
+  };
 
-  const toggleExpand = (id) => {
-    setExpandedCards(prev => ({
-      ...prev,
-      [id]: !prev[id]
-    }));
+  const stopRecording = () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
+    }
+    setIsRecording(false);
+    setCurrentTranscript('');
   };
 
   return (
-    <div className="conversation-mode">
-      <div className="conversation-list">
-        {conversations.map((conv) => (
-          <div key={conv.id} className="conversation-card">
-            <div className="card-header">
-              <img 
-                src={`https://ui-avatars.com/api/?name=${conv.id}&background=random`} 
-                alt="Speaker" 
-                className="speaker-avatar"
-              />
-              <div className="card-content">
-                <div className="original-text">
-                  <p className={expandedCards[conv.id] ? '' : 'truncate'}>
-                    {conv.originalText}
-                  </p>
-                  <span className="language-tag">
-                    {conv.originalLang === 'zh-TW' || conv.originalLang === 'zh' ? 'Chinese' : 'English'}
-                  </span>
-                </div>
-                
-                <div className="translated-text">
-                  <p className={expandedCards[conv.id] ? '' : 'truncate'}>
-                    {conv.isTranslating ? (
-                      <span className="translating">
-                        <Loader2 className="spin-icon" /> 翻譯中...
-                      </span>
-                    ) : (
-                      conv.translatedText || '等待翻譯...'
-                    )}
-                  </p>
-                  <span className="language-tag">
-                    {conv.targetLang === 'zh-TW' || conv.targetLang === 'zh' ? 'Chinese' : 'English'}
-                  </span>
-                </div>
+    <div className="translate-screen">
+      <div className="app-header">
+        <h1>Translate</h1>
+      </div>
+      
+      <div className="tab-switcher">
+        <button 
+          className={`tab ${activeTab === 'two-way' ? 'active' : ''}`}
+          onClick={() => setActiveTab('two-way')}
+        >
+          Two-way Translation
+        </button>
+        <button 
+          className={`tab ${activeTab === 'one-way' ? 'active' : ''}`}
+          onClick={() => setActiveTab('one-way')}
+        >
+          One-way Translation
+        </button>
+      </div>
+      
+      <div className="translate-content">
+        {activeTab === 'two-way' ? (
+          <div className="two-way-mode">
+            {conversations.length === 0 ? (
+              <div className="empty-state">
+                <p>Tap the microphone to start</p>
               </div>
-              
-              <button 
-                className="expand-button"
-                onClick={() => toggleExpand(conv.id)}
-              >
-                {expandedCards[conv.id] ? <ChevronUp /> : <ChevronDown />}
-              </button>
+            ) : (
+              <div className="conversation-list">
+                {conversations.map((conv) => (
+                  <div key={conv.id} className="conversation-card">
+                    <div className="language-tag">{conv.originalLang}</div>
+                    <p className="original-text">{conv.originalText}</p>
+                    <p className="translated-text">{conv.translatedText}</p>
+                    <div className="language-tag">{conv.targetLang}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="one-way-mode">
+            <div className="language-direction">
+              {languages.find(l => l.code === selectedLanguage)?.name} to Chinese
+              <ChevronRight className="direction-icon" />
+            </div>
+            
+            <div className="translation-area">
+              <h3>Translation</h3>
+              <div className="translation-content">
+                {oneWayText || (
+                  <p className="placeholder">Translation will appear here</p>
+                )}
+              </div>
             </div>
           </div>
-        ))}
+        )}
+        
+        {isRecording && currentTranscript && (
+          <div className="current-transcript">
+            <Loader2 className="spin-icon" />
+            <span>{currentTranscript}</span>
+          </div>
+        )}
       </div>
       
       <div className="bottom-controls">
-        <button className="language-button active">English</button>
-        <button className="language-button">Chinese</button>
+        <div className="language-selector">
+          {languages.map((lang) => (
+            <button
+              key={lang.code}
+              className={`language-button ${selectedLanguage === lang.code ? 'active' : ''}`}
+              onClick={() => setSelectedLanguage(lang.code)}
+              disabled={isRecording}
+            >
+              {lang.name}
+            </button>
+          ))}
+        </div>
         
         <button 
-          className={`record-button ${isListening ? 'recording' : ''}`}
-          onClick={isListening ? onStopListening : onStartListening}
+          className={`record-button ${isRecording ? 'recording' : ''}`}
+          onClick={isRecording ? stopRecording : startRecording}
         >
           <Mic className="mic-icon" />
         </button>
@@ -184,187 +240,288 @@ const ConversationMode = ({
   );
 };
 
-// 組件：講座模式
-const LectureMode = ({ 
-  lectureText, 
-  isListening, 
-  onStartListening, 
-  onStopListening,
-  sourceLanguage,
-  targetLanguage 
-}) => {
+// 組件：歷史記錄頁面
+const HistoryScreen = () => {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [history, setHistory] = useState([
+    {
+      id: 1,
+      date: 'Today',
+      time: '10:45 AM',
+      mode: 'two-way',
+      originalLang: 'English',
+      originalText: 'Hello, how are you?',
+      translatedLang: 'Chinese',
+      translatedText: '你好，你好嗎？'
+    },
+    {
+      id: 2,
+      date: 'Today',
+      time: '09:30 AM',
+      mode: 'one-way',
+      originalLang: 'Chinese',
+      originalText: '今天天氣很好',
+      translatedLang: 'English',
+      translatedText: 'The weather is nice today'
+    }
+  ]);
+
+  const filteredHistory = history.filter(item => 
+    item.originalText.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.translatedText.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const groupedHistory = filteredHistory.reduce((groups, item) => {
+    const date = item.date;
+    if (!groups[date]) {
+      groups[date] = [];
+    }
+    groups[date].push(item);
+    return groups;
+  }, {});
+
   return (
-    <div className="lecture-mode">
-      <div className="lecture-header">
-        <h2>Live Translation</h2>
-        <p>The lecture will be translated from {sourceLanguage} to {targetLanguage}. You can change the language at any time.</p>
-        
-        <div className="language-selector">
-          <span>{sourceLanguage} to {targetLanguage}</span>
-          <ChevronRight className="arrow-icon" />
-        </div>
+    <div className="history-screen">
+      <div className="app-header">
+        <h1>History</h1>
       </div>
       
-      <div className="lecture-content">
-        <h3>Translation</h3>
-        <div className="translation-text">
-          {lectureText.map((paragraph, index) => (
-            <p key={index}>{paragraph}</p>
-          ))}
-        </div>
+      <div className="search-bar">
+        <Search className="search-icon" />
+        <input
+          type="text"
+          placeholder="Search history..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+        {searchQuery && (
+          <button onClick={() => setSearchQuery('')} className="clear-button">
+            <X className="clear-icon" />
+          </button>
+        )}
       </div>
       
-      <div className="lecture-controls">
-        <button 
-          className={`start-button ${isListening ? 'recording' : ''}`}
-          onClick={isListening ? onStopListening : onStartListening}
-        >
-          <Mic className="mic-icon" />
-          {isListening ? 'Stop Recording' : 'Start Recording'}
-        </button>
+      <div className="history-content">
+        {Object.keys(groupedHistory).length === 0 ? (
+          <div className="empty-state">
+            <div className="empty-icon">📝</div>
+            <h3>No translation history yet</h3>
+            <p>Your translation history will appear here</p>
+          </div>
+        ) : (
+          Object.entries(groupedHistory).map(([date, items]) => (
+            <div key={date} className="history-group">
+              <div className="date-header">{date}</div>
+              {items.map((item) => (
+                <div key={item.id} className="history-card">
+                  <div className="card-header">
+                    <span className="time">{item.time}</span>
+                    <span className="mode-icon">{item.mode === 'two-way' ? '⇄' : '→'}</span>
+                  </div>
+                  <div className="translation-content">
+                    <div className="original">
+                      <span className="lang-tag">{item.originalLang}</span>
+                      <p>{item.originalText}</p>
+                    </div>
+                    <div className="translated">
+                      <span className="lang-tag">{item.translatedLang}</span>
+                      <p>{item.translatedText}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ))
+        )}
       </div>
     </div>
   );
 };
 
 // 組件：設定頁面
-const SettingsScreen = ({ apiKeys, onUpdateApiKeys, onClose }) => {
-  const [localApiKeys, setLocalApiKeys] = useState(apiKeys);
-  const [theme, setTheme] = useState('light');
+const SettingsScreen = ({ apiKeys, onUpdateApiKeys, translationProvider, onProviderChange }) => {
+  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
+  const [showTextSizeModal, setShowTextSizeModal] = useState(false);
+  const [showServiceModal, setShowServiceModal] = useState(false);
   const [textSize, setTextSize] = useState('medium');
+  const [theme, setTheme] = useState('light');
+  const [tempApiKey, setTempApiKey] = useState('');
+  const [showApiKey, setShowApiKey] = useState(false);
 
-  const handleSave = () => {
-    onUpdateApiKeys(localApiKeys);
-    localStorage.setItem('theme', theme);
-    localStorage.setItem('textSize', textSize);
-    onClose();
+  const handleThemeToggle = () => {
+    const newTheme = theme === 'light' ? 'dark' : 'light';
+    setTheme(newTheme);
+    document.body.className = newTheme;
+    localStorage.setItem('theme', newTheme);
+  };
+
+  const handleTextSizeChange = (size) => {
+    setTextSize(size);
+    document.documentElement.style.fontSize = 
+      size === 'small' ? '14px' : 
+      size === 'large' ? '18px' : '16px';
+    localStorage.setItem('textSize', size);
+    setShowTextSizeModal(false);
   };
 
   return (
     <div className="settings-screen">
-      <div className="settings-header">
-        <button onClick={onClose} className="back-button">
-          <ArrowLeft />
-        </button>
+      <div className="app-header">
         <h1>Settings</h1>
       </div>
       
       <div className="settings-content">
-        <section className="settings-section">
-          <h2>API Key</h2>
-          <div className="setting-item" onClick={() => {}}>
-            <Key className="setting-icon" />
+        <div className="settings-group">
+          <h2>API KEY</h2>
+          <div className="setting-item" onClick={() => setShowApiKeyModal(true)}>
             <div className="setting-info">
               <h3>Manage API Key</h3>
               <p>View, modify, or clear your API key.</p>
             </div>
             <ChevronRight className="chevron" />
           </div>
-        </section>
+        </div>
         
-        <section className="settings-section">
-          <h2>Translation Service</h2>
-          <div className="setting-item">
-            <Globe className="setting-icon" />
+        <div className="settings-group">
+          <h2>TRANSLATION SERVICE</h2>
+          <div className="setting-item" onClick={() => setShowServiceModal(true)}>
             <div className="setting-info">
               <h3>Select Service</h3>
-              <p>Choose your preferred translation service.</p>
+              <p className="current-value">{translationProvider === 'openai' ? 'OpenAI' : 'DeepSeek'}</p>
             </div>
             <ChevronRight className="chevron" />
           </div>
-        </section>
+        </div>
         
-        <section className="settings-section">
-          <h2>Display Preferences</h2>
-          <div className="setting-item">
-            <Type className="setting-icon" />
+        <div className="settings-group">
+          <h2>DISPLAY PREFERENCES</h2>
+          <div className="setting-item" onClick={() => setShowTextSizeModal(true)}>
             <div className="setting-info">
               <h3>Text Size</h3>
-              <p>Adjust text size for better readability.</p>
+              <p className="current-value">{textSize.charAt(0).toUpperCase() + textSize.slice(1)}</p>
             </div>
             <ChevronRight className="chevron" />
           </div>
           
           <div className="setting-item">
-            <Sun className="setting-icon" />
             <div className="setting-info">
               <h3>Theme</h3>
               <p>Switch between light and dark themes.</p>
             </div>
-            <ChevronRight className="chevron" />
+            <label className="toggle-switch">
+              <input
+                type="checkbox"
+                checked={theme === 'dark'}
+                onChange={handleThemeToggle}
+              />
+              <span className="toggle-slider"></span>
+            </label>
           </div>
-        </section>
+        </div>
         
-        <section className="settings-section">
-          <h2>Help & Feedback</h2>
-          <div className="setting-item" onClick={() => onClose('help')}>
-            <HelpCircle className="setting-icon" />
+        <div className="settings-group">
+          <h2>HELP & FEEDBACK</h2>
+          <div className="setting-item" onClick={() => alert('Support email: support@translateapp.com')}>
             <div className="setting-info">
               <h3>Support & Feedback</h3>
               <p>Get support or provide suggestions.</p>
             </div>
             <ChevronRight className="chevron" />
           </div>
-        </section>
-      </div>
-    </div>
-  );
-};
-
-// 組件：幫助頁面
-const HelpScreen = ({ onClose }) => {
-  return (
-    <div className="help-screen">
-      <div className="help-header">
-        <button onClick={onClose} className="back-button">
-          <X />
-        </button>
-        <h1>Help & Feedback</h1>
+        </div>
       </div>
       
-      <div className="help-content">
-        <section className="help-section">
-          <h2>Frequently Asked Questions</h2>
-          
-          <div className="faq-item">
-            <h3>How do I change translation modes?</h3>
-            <p>Learn how to switch between different translation modes.</p>
-            <ChevronRight className="chevron" />
+      {/* API Key Modal */}
+      {showApiKeyModal && (
+        <div className="modal-overlay" onClick={() => setShowApiKeyModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h2>Manage API Key</h2>
+            <div className="modal-body">
+              <label>API Key</label>
+              <div className="input-group">
+                <input
+                  type={showApiKey ? 'text' : 'password'}
+                  value={tempApiKey || apiKeys.google}
+                  onChange={(e) => setTempApiKey(e.target.value)}
+                  placeholder="Enter your API key"
+                />
+                <button onClick={() => setShowApiKey(!showApiKey)} className="eye-button">
+                  {showApiKey ? <EyeOff /> : <Eye />}
+                </button>
+              </div>
+              <div className="modal-actions">
+                <button 
+                  className="clear-button"
+                  onClick={() => {
+                    setTempApiKey('');
+                    onUpdateApiKeys({ ...apiKeys, google: '' });
+                  }}
+                >
+                  Clear
+                </button>
+                <button 
+                  className="save-button"
+                  onClick={() => {
+                    onUpdateApiKeys({ ...apiKeys, google: tempApiKey || apiKeys.google });
+                    setShowApiKeyModal(false);
+                  }}
+                >
+                  Save
+                </button>
+              </div>
+            </div>
           </div>
-          
-          <div className="faq-item">
-            <h3>How do I manage language settings?</h3>
-            <p>Find out how to adjust settings for language preferences.</p>
-            <ChevronRight className="chevron" />
+        </div>
+      )}
+      
+      {/* Text Size Modal */}
+      {showTextSizeModal && (
+        <div className="modal-overlay" onClick={() => setShowTextSizeModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h2>Text Size</h2>
+            <div className="modal-body">
+              <div className="option-list">
+                {['small', 'medium', 'large'].map((size) => (
+                  <div 
+                    key={size}
+                    className={`option-item ${textSize === size ? 'selected' : ''}`}
+                    onClick={() => handleTextSizeChange(size)}
+                  >
+                    <span>{size.charAt(0).toUpperCase() + size.slice(1)}</span>
+                    {textSize === size && <Check className="check-icon" />}
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
-          
-          <div className="faq-item">
-            <h3>How do I use real-time translation?</h3>
-            <p>Get tips on using the app effectively for real-time translation.</p>
-            <ChevronRight className="chevron" />
+        </div>
+      )}
+      
+      {/* Service Selection Modal */}
+      {showServiceModal && (
+        <div className="modal-overlay" onClick={() => setShowServiceModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h2>Select Service</h2>
+            <div className="modal-body">
+              <div className="option-list">
+                {['openai', 'deepseek'].map((service) => (
+                  <div 
+                    key={service}
+                    className={`option-item ${translationProvider === service ? 'selected' : ''}`}
+                    onClick={() => {
+                      onProviderChange(service);
+                      setShowServiceModal(false);
+                    }}
+                  >
+                    <span>{service === 'openai' ? 'OpenAI' : 'DeepSeek'}</span>
+                    {translationProvider === service && <Check className="check-icon" />}
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
-          
-          <div className="faq-item">
-            <h3>Troubleshooting common issues</h3>
-            <p>Troubleshoot common issues and find solutions.</p>
-            <ChevronRight className="chevron" />
-          </div>
-        </section>
-        
-        <section className="help-section">
-          <h2>Contact & Feedback</h2>
-          
-          <div className="contact-item">
-            <h3>Contact Support</h3>
-            <ChevronRight className="chevron" />
-          </div>
-          
-          <div className="contact-item">
-            <h3>Submit Feedback</h3>
-            <ChevronRight className="chevron" />
-          </div>
-        </section>
-      </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -372,209 +529,80 @@ const HelpScreen = ({ onClose }) => {
 // 主應用程式
 const TranslationApp = () => {
   const [currentScreen, setCurrentScreen] = useState('welcome');
-  const [translationMode, setTranslationMode] = useState(null);
-  const [conversations, setConversations] = useState([]);
-  const [lectureText, setLectureText] = useState([]);
-  const [isListening, setIsListening] = useState(false);
   const [apiKeys, setApiKeys] = useState({
     google: '',
     openai: '',
     deepseek: ''
   });
+  const [translationProvider, setTranslationProvider] = useState('openai');
+  const [hasSeenWelcome, setHasSeenWelcome] = useState(false);
 
   useEffect(() => {
-    // 載入儲存的設定
+    // 載入設定
     const savedKeys = localStorage.getItem('apiKeys');
     if (savedKeys) {
       setApiKeys(JSON.parse(savedKeys));
     }
     
-    // 模擬一些對話數據
-    setConversations([
-      {
-        id: 1,
-        originalText: "Hello, how are you?",
-        originalLang: "en",
-        translatedText: "你好，你好嗎？",
-        targetLang: "zh-TW",
-        isTranslating: false
-      },
-      {
-        id: 2,
-        originalText: "你好，你好嗎？",
-        originalLang: "zh-TW",
-        translatedText: "Hello, how are you?",
-        targetLang: "en",
-        isTranslating: false
-      },
-      {
-        id: 3,
-        originalText: "I'm fine, thank you.",
-        originalLang: "en",
-        translatedText: "我很好，謝謝。",
-        targetLang: "zh-TW",
-        isTranslating: false
-      },
-      {
-        id: 4,
-        originalText: "我很好，謝謝。",
-        originalLang: "zh-TW", 
-        translatedText: "I'm fine, thank you.",
-        targetLang: "en",
-        isTranslating: false
-      },
-      {
-        id: 5,
-        originalText: "What's your name?",
-        originalLang: "en",
-        translatedText: "你叫什麼名字？",
-        targetLang: "zh-TW",
-        isTranslating: false
-      },
-      {
-        id: 6,
-        originalText: "你叫什麼名字？",
-        originalLang: "zh-TW",
-        translatedText: "What's your name?",
-        targetLang: "en",
-        isTranslating: false
-      },
-      {
-        id: 7,
-        originalText: "My name is Alex.",
-        originalLang: "en",
-        translatedText: "我的名字是艾萊克斯。",
-        targetLang: "zh-TW",
-        isTranslating: false
-      },
-      {
-        id: 8,
-        originalText: "我的名字是史蒂芬。",
-        originalLang: "zh-TW",
-        translatedText: "My name is Stephen.",
-        targetLang: "en",
-        isTranslating: false
-      }
-    ]);
+    const savedProvider = localStorage.getItem('translationProvider');
+    if (savedProvider) {
+      setTranslationProvider(savedProvider);
+    }
     
-    // 模擬講座文本
-    setLectureText([
-      "The speaker is discussing the latest advancements in AI and machine learning, focusing on applications in healthcare and education. The translation is displayed in real-time, providing a seamless experience for the audience.",
-      "The speaker transitions to discussing the ethical implications of AI, emphasizing the need for responsible development and deployment. The translation continues to provide accurate and timely updates.",
-      "The speaker concludes with a Q&A session, addressing questions about the future of AI and its potential impact on society. The translation ensures that all participants can understand and engage with the discussion."
-    ]);
+    const savedWelcome = localStorage.getItem('hasSeenWelcome');
+    if (savedWelcome) {
+      setHasSeenWelcome(true);
+      setCurrentScreen('translate');
+    }
+    
+    // 載入主題設定
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) {
+      document.body.className = savedTheme;
+    }
+    
+    // 載入文字大小
+    const savedTextSize = localStorage.getItem('textSize');
+    if (savedTextSize) {
+      document.documentElement.style.fontSize = 
+        savedTextSize === 'small' ? '14px' : 
+        savedTextSize === 'large' ? '18px' : '16px';
+    }
   }, []);
 
-  const handleSelectMode = (mode) => {
-    setTranslationMode(mode);
-    setCurrentScreen(mode);
-  };
-
-  const handleStartListening = () => {
-    setIsListening(true);
-    // 實際的語音識別邏輯
-  };
-
-  const handleStopListening = () => {
-    setIsListening(false);
-    // 停止語音識別
-  };
-
-  const handleSpeak = (text, lang) => {
-    // 語音合成邏輯
-    if ('speechSynthesis' in window) {
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = lang;
-      speechSynthesis.speak(utterance);
-    }
-  };
-
-  const handleSettingsClose = (nextScreen) => {
-    if (nextScreen === 'help') {
-      setCurrentScreen('help');
-    } else {
-      setCurrentScreen(translationMode || 'modeSelection');
-    }
+  const handleStart = () => {
+    setHasSeenWelcome(true);
+    localStorage.setItem('hasSeenWelcome', 'true');
+    setCurrentScreen('translate');
   };
 
   const renderScreen = () => {
     switch (currentScreen) {
       case 'welcome':
-        return (
-          <WelcomeScreen 
-            onStart={() => setCurrentScreen('modeSelection')}
-            onLearnMore={() => {
-              alert('這是一個實時翻譯應用，支援對話和講座兩種模式！');
-            }}
-          />
-        );
+        return <WelcomeScreen onStart={handleStart} />;
         
-      case 'modeSelection':
-        return <ModeSelection onSelectMode={handleSelectMode} />;
-      
-      case 'conversation':
-        return (
-          <>
-            <div className="app-header">
-              <button 
-                className="back-button"
-                onClick={() => setCurrentScreen('modeSelection')}
-              >
-                <ArrowLeft />
-              </button>
-              <h1>Conversation</h1>
-            </div>
-            <ConversationMode
-              conversations={conversations}
-              isListening={isListening}
-              onStartListening={handleStartListening}
-              onStopListening={handleStopListening}
-              onSpeak={handleSpeak}
-              targetLanguage="en"
-              onLanguageChange={() => {}}
-            />
-          </>
-        );
-      
-      case 'lecture':
-        return (
-          <>
-            <div className="app-header">
-              <button 
-                className="back-button"
-                onClick={() => setCurrentScreen('modeSelection')}
-              >
-                <ArrowLeft />
-              </button>
-              <h1>Live Translation</h1>
-            </div>
-            <LectureMode
-              lectureText={lectureText}
-              isListening={isListening}
-              onStartListening={handleStartListening}
-              onStopListening={handleStopListening}
-              sourceLanguage="Chinese"
-              targetLanguage="English"
-            />
-          </>
-        );
-      
+      case 'translate':
+        return <TranslateScreen apiKeys={apiKeys} translationProvider={translationProvider} />;
+        
+      case 'history':
+        return <HistoryScreen />;
+        
       case 'settings':
         return (
           <SettingsScreen
             apiKeys={apiKeys}
-            onUpdateApiKeys={setApiKeys}
-            onClose={handleSettingsClose}
+            onUpdateApiKeys={(keys) => {
+              setApiKeys(keys);
+              localStorage.setItem('apiKeys', JSON.stringify(keys));
+            }}
+            translationProvider={translationProvider}
+            onProviderChange={(provider) => {
+              setTranslationProvider(provider);
+              localStorage.setItem('translationProvider', provider);
+            }}
           />
         );
-      
-      case 'help':
-        return (
-          <HelpScreen
-            onClose={() => setCurrentScreen('settings')}
-          />
-        );
-      
+        
       default:
         return null;
     }
@@ -584,24 +612,27 @@ const TranslationApp = () => {
     <div className="app-container">
       {renderScreen()}
       
-      {/* 底部導航欄 - 只在主要模式顯示 */}
-      {(currentScreen === 'conversation' || currentScreen === 'lecture') && (
+      {/* 底部導航欄 - 在所有主要頁面顯示 */}
+      {currentScreen !== 'welcome' && (
         <div className="bottom-nav">
           <button 
-            className={`nav-item ${currentScreen === 'conversation' || currentScreen === 'lecture' ? 'active' : ''}`}
-            onClick={() => {}}
+            className={`nav-item ${currentScreen === 'translate' ? 'active' : ''}`}
+            onClick={() => setCurrentScreen('translate')}
           >
             <Globe className="nav-icon" />
             <span>Translate</span>
           </button>
           
-          <button className="nav-item">
+          <button 
+            className={`nav-item ${currentScreen === 'history' ? 'active' : ''}`}
+            onClick={() => setCurrentScreen('history')}
+          >
             <Clock className="nav-icon" />
             <span>History</span>
           </button>
           
           <button 
-            className="nav-item"
+            className={`nav-item ${currentScreen === 'settings' ? 'active' : ''}`}
             onClick={() => setCurrentScreen('settings')}
           >
             <Settings className="nav-icon" />
