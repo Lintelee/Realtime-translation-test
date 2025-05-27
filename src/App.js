@@ -530,9 +530,9 @@ const SettingsScreen = ({ apiKeys, onUpdateApiKeys, translationProvider, onProvi
 const TranslationApp = () => {
   const [currentScreen, setCurrentScreen] = useState('welcome');
   const [apiKeys, setApiKeys] = useState({
-    google: '',
-    openai: '',
-    deepseek: ''
+    google: localStorage.getItem('googleApiKey') || '', // 在這裡加入您的預設 API
+    openai: localStorage.getItem('openaiApiKey') || '', // 在這裡加入您的預設 API
+    deepseek: localStorage.getItem('deepseekApiKey') || ''
   });
   const [translationProvider, setTranslationProvider] = useState('openai');
   const [hasSeenWelcome, setHasSeenWelcome] = useState(false);
