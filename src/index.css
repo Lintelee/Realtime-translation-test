@@ -33,11 +33,6 @@ body {
   overflow: hidden;
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
-}
-
 /* 防止文字選擇（移動設備優化） */
 * {
   -webkit-user-select: none;
@@ -74,31 +69,4 @@ input[type="email"],
 input[type="number"],
 textarea {
   font-size: 16px;
-}
-
-/* 滾動條樣式（桌面瀏覽器） */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: #f1f1f1;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #888;
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #555;
-}
-
-/* PWA 安全區域處理 */
-.safe-area-inset {
-  padding-top: env(safe-area-inset-top);
-  padding-right: env(safe-area-inset-right);
-  padding-bottom: env(safe-area-inset-bottom);
-  padding-left: env(safe-area-inset-left);
 }
